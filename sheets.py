@@ -1,6 +1,8 @@
 import gspread
 from google.oauth2.service_account import Credentials
 import os
+import json
+import base64
 import datetime
 from dotenv import load_dotenv
 
@@ -9,8 +11,13 @@ load_dotenv()
 SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
 
 def get_sheet(spreadsheet_id: str):
-    creds_file = os.getenv("GOOGLE_CREDS_FILE", "credentials.json")
-    creds = Credentials.from_service_account_file(creds_file, scopes=SCOPES)
+    creds_b64 = os.getenv("GOOGLE_CREDS_BASE64")
+    if creds_b64:
+        creds_json = json.loads(base64.b64decode(creds_b64).decode())
+        creds = Credentials.from_service_account_info(creds_json, scopes=SCOPES)
+    else:
+        creds_file = os.getenv("GOOGLE_CREDS_FILE", "credentials.json")
+        creds = Credentials.from_service_account_file(creds_file, scopes=SCOPES)
     client = gspread.authorize(creds)
     return client.open_by_key(spreadsheet_id).sheet1
 
